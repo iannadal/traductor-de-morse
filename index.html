@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traductor Morse</title>
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Contenedor principal */
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        /* Título */
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        /* Estilos del input */
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        /* Botón de envío */
+        button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        /* Estilos del mensaje */
+        #mensaje {
+            margin-top: 15px;
+            font-size: 16px;
+            color: #3ce764;
+            font-weight: bold;
+        }
+
+        /* Estilo para el mensaje de éxito */
+        .success {
+            color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Traductor Morse</h1>
+        <p>Introduce un texto en español para enviarlo a Firebase.</p>
+        <input type="text" id="texto" placeholder="Escribe aquí tu texto">
+        <button onclick="enviarTexto()">Enviar a Firebase</button>
+        <p id="mensaje"></p>
+    </div>
+
+    <script type="module">
+        // Importar las funciones necesarias de Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDENDwnOm0jF2mqrC7TNANbdvVlxyN7gXE",
+            authDomain: "traductor-de-morse.firebaseapp.com",
+            databaseURL: "https://traductor-de-morse-default-rtdb.firebaseio.com",
+            projectId: "traductor-de-morse",
+            storageBucket: "traductor-de-morse.firebasestorage.app",
+            messagingSenderId: "856524425474",
+            appId: "1:856524425474:web:b689e08d616f7d60c11a1b"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Función para enviar el texto a Firebase Realtime Database
+        window.enviarTexto = function() {
+            // Obtener el valor del campo de texto
+            const texto = document.getElementById("texto").value;
+
+            const mensaje = document.getElementById("mensaje");
+
+            if (texto !== "") {
+                // Guardar el texto en la base de datos bajo la ruta '/text_to_morse/input'
+                set(ref(db, "/text_to_morse/input"), texto)
+                    .then(() => {
+                        // Si el texto se guarda correctamente
+                        mensaje.innerText = "Texto enviado a Firebase exitosamente!";
+                        mensaje.className = "success"; // Cambiar el color del mensaje
+                    })
+                    .catch((error) => {
+                        // Si ocurre un error
+                        mensaje.innerText = "Error: " + error;
+                        mensaje.className = ""; // Restablecer el color al error
+                    });
+            } else {
+                // Si el campo de texto está vacío
+                mensaje.innerText = "Por favor, ingresa un texto.";
+                mensaje.className = ""; // Restablecer el color al error
+            }
+        }
+    </script>
+</body>
+</html>
