@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traductor Morse</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            gap: 40px;
+            justify-content: space-between;
+        }
+
+        .box {
+            flex: 1;
+            text-align: center;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #mensaje, #mensajeTraductor {
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .success {
+            color: #27ae60;
+        }
+
+        #password-container {
+            max-width: 500px;
+        }
+
+        #traductor-container {
+            display: none;
+        }
+
+        #respuesta {
+            margin-top: 15px;
+            font-size: 18px;
+            color: #8e44ad;
+            display: none;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Pantalla de contraseña -->
+    <div class="container" id="password-container">
+        <div class="box">
+            <h1>Acceso restringido</h1>
+            <p>Ingresa la contraseña para acceder:</p>
+            <input type="password" id="password" placeholder="Contraseña">
+            <button onclick="verificarPassword()">Entrar</button>
+            <p id="mensaje"></p>
+        </div>
+    </div>
+
+    <!-- Traductor + Respuesta -->
+    <div class="container" id="traductor-container">
+        <div class="box">
+            <h1>Envio de texto</h1>
+            <p>Introduce un texto  para enviarlo a Firebase.</p>
+            <input type="text" id="texto" placeholder="Escribe aquí tu texto">
+            <button onclick="enviarTexto()">Enviar a Firebase</button>
+            <p id="mensajeTraductor"></p>
+        </div>
+        <div class="box">
+            <h1>Respuesta del ESP32</h1>
+            <div id="respuesta"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDENDwnOm0jF2mqrC7TNANbdvVlxyN7gXE",
+            authDomain: "traductor-de-morse.firebaseapp.com",
+            databaseURL: "https://traductor-de-morse-default-rtdb.firebaseio.com",
+            projectId: "traductor-de-morse",
+            storageBucket: "traductor-de-morse.appspot.com",
+            messagingSenderId: "856524425474",
+            appId: "1:856524425474:web:b689e08d616f7d60c11a1b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const passwordCorrecta = "morse123";
+
+        window.verificarPassword = function () {
+            const passwordIngresada = document.getElementById("password").value;
+            const mensaje = document.getElementById("mensaje");
+
+            if (passwordIngresada === passwordCorrecta) {
+                document.getElementById("password-container").style.display = "none";
+                document.getElementById("traductor-container").style.display = "flex";
+
+                // Limpiar campo de respuesta anterior al iniciar sesión
+                const respuestaDiv = document.getElementById("respuesta");
+                respuestaDiv.innerText = "";
+                respuestaDiv.style.display = "none";
+
+                // Resetear último input enviado
+                ultimoInputEnviado = "";
+
+            } else {
+                mensaje.innerText = "Contraseña incorrecta.";
+                mensaje.className = "";
+            }
+        }
+
+        let ultimoInputEnviado = "";
+
+        window.enviarTexto = function () {
+            const texto = document.getElementById("texto").value;
+            const mensaje = document.getElementById("mensajeTraductor");
+
+            if (texto !== "") {
+                set(ref(db, "/text_to_morse/input"), texto)
+                    .then(() => {
+                        mensaje.innerText = "Texto enviado a Firebase exitosamente!";
+                        mensaje.className = "success";
+                        ultimoInputEnviado = texto;
+                    })
+                    .catch((error) => {
+                        mensaje.innerText = "Error: " + error;
+                        mensaje.className = "";
+                    });
+            } else {
+                mensaje.innerText = "Por favor, ingresa un texto.";
+                mensaje.className = "";
+            }
+        }
+
+        const salidaRef = ref(db, "/text_to_morse/output");
+        onValue(salidaRef, (snapshot) => {
+            const valor = snapshot.val();
+            const respuestaDiv = document.getElementById("respuesta");
+
+            if (valor && valor !== ultimoInputEnviado) {
+                respuestaDiv.innerText = valor;
+                respuestaDiv.style.display = "block";
+            } else {
+                respuestaDiv.innerText = "";
+                respuestaDiv.style.display = "none";
+            }
+        });
+    </script>
+
+</body>
+</html>
